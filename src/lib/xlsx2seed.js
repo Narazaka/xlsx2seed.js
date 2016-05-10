@@ -17,15 +17,16 @@ class Xlsx2Seed {
       );
   }
 
-  sheet(sheet_name) {
-    return new Xlsx2SeedSheet(sheet_name, this.book.Sheets[sheet_name]);
+  sheet(sheet_name, start_row_index = 1) {
+    return new Xlsx2SeedSheet(sheet_name, this.book.Sheets[sheet_name], start_row_index);
   }
 }
 
 class Xlsx2SeedSheet {
-  constructor(sheet_name, sheet) {
+  constructor(sheet_name, sheet, start_row_index = 1) {
     this._sheet_name = sheet_name;
     this._sheet = sheet;
+    this._start_row_index = start_row_index;
   }
 
   get sheet_name() {
@@ -62,7 +63,7 @@ class Xlsx2SeedSheet {
     const column_names = [];
     const column_indexes = [];
     for (let column_index = 0; column_index <= this.max_column_index; ++column_index) {
-      const address = XLSX.utils.encode_cell({c: column_index, r: 1});
+      const address = XLSX.utils.encode_cell({c: column_index, r: this._start_row_index});
       const cell = this.sheet[address];
       const value = XLSX.utils.format_cell(cell);
       if (value.length && value !== 'dummy' && value !== 'VERSION') {
@@ -85,7 +86,7 @@ class Xlsx2SeedSheet {
 
   _get_data() {
     const rows = [];
-    for (let row_index = 2; row_index <= this.max_row_index; ++row_index) {
+    for (let row_index = this._start_row_index + 1; row_index <= this.max_row_index; ++row_index) {
       const row = [];
       rows.push(row);
       for (const column_index of this.column_indexes) {
