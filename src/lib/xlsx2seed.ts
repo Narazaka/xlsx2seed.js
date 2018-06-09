@@ -1,14 +1,17 @@
 'use strict';
 
-const XLSX = require('xlsx');
-const jsyaml = require('js-yaml');
-const semver = require('semver');
+import * as jsyaml from 'js-yaml';
+import * as semver from 'semver';
+import * as XLSX from 'xlsx';
 
-class Xlsx2Seed {
+export class Xlsx2Seed {
+  private readonly _book: XLSX.WorkBook;
+  private _sheet_names?: string[];
+
   /**
-   * @param {string} file xlsx file
+   * @param file xlsx file
    */
-  constructor(file) {
+  constructor(file: string) {
     this._book = XLSX.readFile(file);
   }
 
@@ -23,29 +26,51 @@ class Xlsx2Seed {
       );
   }
 
-  sheet(sheet_name, config) {
+  sheet(sheet_name: string, config?: Xlsx2SeedSheetConfig) {
     return new Xlsx2SeedSheet(sheet_name, this.book.Sheets[sheet_name], config);
   }
 }
 
-class Xlsx2SeedSheet {
+export interface Xlsx2SeedSheetConfig {
+  column_names_row?: number;
+  data_start_row?: number;
+  ignore_columns?: string[];
+  version_column?: string;
+}
+
+export type Value = string | number | null;
+
+export class Xlsx2SeedSheet {
+  private readonly _sheet_name: string;
+  private readonly _sheet: XLSX.WorkSheet;
+  private readonly _column_names_row: number;
+  private readonly _data_start_row: number;
+  private readonly _ignore_columns: string[];
+  private readonly _version_column?: string;
+  private readonly _data: {[version: string]: Xlsx2SeedData};
+  private readonly _row_indexes: {[version: string]: number[]};
+
+  private _all_range?: XLSX.Range;
+  private _max_column_index?: number;
+  private _max_row_index?: number;
+  private _column_names?: string[];
+  private _column_indexes?: number[];
+  private _version_column_index?: number;
+
   /**
-   * @param {string} sheet_name sheet name
-   * @param {XLSX.WorkSheet} sheet sheet data
-   * @param {Object} [config] config
-   * @param {number} [config.column_names_row] column names row
-   * @param {number} [config.data_start_row] data start row
-   * @param {string[]} [config.ignore_columns] ignore columns
-   * @param {string} [config.version_column] version column
+   * @param sheet_name sheet name
+   * @param sheet sheet data
+   * @param config config
    */
-  constructor(sheet_name, sheet, config = {}) {
+  constructor(sheet_name: string, sheet: XLSX.WorkSheet, config: Xlsx2SeedSheetConfig = {}) {
     this._sheet_name = sheet_name;
     this._sheet = sheet;
+    // tslint:disable-next-line no-null-keyword
+    const column_names_row = config.column_names_row == null ? 1 : config.column_names_row;
     const {
-      column_names_row = 1,
       data_start_row = column_names_row + 1,
       ignore_columns = [],
-      version_column = null,
+      version_column,
     } = config;
     this._column_names_row = column_names_row;
     this._data_start_row = data_start_row;
@@ -80,7 +105,7 @@ class Xlsx2SeedSheet {
   }
 
   get all_range() {
-    return this._all_range || (this._all_range = XLSX.utils.decode_range(this.sheet['!ref']));
+    return this._all_range || (this._all_range = XLSX.utils.decode_range(this.sheet['!ref'] as string));
   }
 
   get max_column_index() {
@@ -93,21 +118,25 @@ class Xlsx2SeedSheet {
 
   get column_names() {
     if (!this._column_names) this._set_column_info();
-    return this._column_names;
+
+    return this._column_names as string[];
   }
 
   get column_indexes() {
     if (!this._column_indexes) this._set_column_info();
-    return this._column_indexes;
+
+    return this._column_indexes as number[];
   }
 
   get version_column_index() {
     if (this.version_column && !this._version_column_index) this._set_column_info();
+
     return this._version_column_index;
   }
 
   row_indexes(require_version = '') {
     if (!this._row_indexes[require_version]) this._get_data(require_version);
+
     return this._row_indexes[require_version];
   }
 
@@ -134,21 +163,22 @@ class Xlsx2SeedSheet {
     return this.column_names.indexOf('id') !== -1;
   }
 
-  sheet_column_index(column_name) {
+  sheet_column_index(column_name: string) {
     return this.column_indexes[this.column_names.indexOf(column_name)];
   }
 
-  sheet_row_index(row_index, require_version = '') {
+  sheet_row_index(row_index: number, require_version = '') {
     return this.row_indexes(require_version)[row_index];
   }
 
   data(require_version = '') {
     if (!this._data[require_version]) this._get_data(require_version);
+
     return this._data[require_version];
   }
 
   _get_data(require_version = '') {
-    const row_indexes = this._row_indexes[require_version] = [];
+    const row_indexes = this._row_indexes[require_version] = [] as number[];
     const rows = [];
     const version_column_index = this.version_column_index;
     const require_version_range = `>= ${require_version}`;
@@ -165,7 +195,7 @@ class Xlsx2SeedSheet {
           throw new Xlsx2SeedVersionError(row_index, version_column_index, error);
         }
       }
-      const row = [];
+      const row: Value[] = [];
       rows.push(row);
       row_indexes.push(row_index);
       for (const column_index of this.column_indexes) {
@@ -173,10 +203,12 @@ class Xlsx2SeedSheet {
         const cell = this.sheet[address];
         const value = XLSX.utils.format_cell(cell);
         const use_value =
+          // tslint:disable-next-line no-null-keyword
           value == null || !value.length ? null : // empty cell -> null
-            cell.t === 'n' && value.match(/E\+\d+$/) && !isNaN(/** @type {any} */(value)) ? Number(cell.v) : // 1.00+E12 -> use raw value
+            // tslint:disable-next-line max-line-length
+            cell.t === 'n' && value.match(/E\+\d+$/) && !isNaN(value as any) ? Number(cell.v) : // 1.00+E12 -> use raw value
               cell.t === 'n' && value.match(/,/) && !isNaN(cell.v) ? Number(cell.v) : // 1,000 -> use raw value
-                isNaN(/** @type {any} */(value)) ? value.replace(/\\n/g, '\n').replace(/\r/g, '') : // "\\n" -> "\n" / delete "\r"
+                isNaN(value as any) ? value.replace(/\\n/g, '\n').replace(/\r/g, '') : // "\\n" -> "\n" / delete "\r"
                   Number(value);
         row.push(use_value);
       }
@@ -185,13 +217,29 @@ class Xlsx2SeedSheet {
   }
 }
 
-class Xlsx2SeedData {
+export interface Record {
+  id: string | number;
+  [key: string]: Value;
+}
+
+export interface KeyBasedRecord {
+  [key: string]: Record;
+}
+export interface SeparatedKeyBasedRecord {
+  [sepkey: string]: KeyBasedRecord;
+}
+
+export class Xlsx2SeedData {
+  private readonly _sheet_name: string;
+  private readonly _column_names: string[];
+  private readonly _rows: Value[][];
+
   /**
-   * @param {string} sheet_name sheet name
-   * @param {string[]} column_names column names
-   * @param {Array<Array<string | number | null>>} rows row data
+   * @param sheet_name sheet name
+   * @param column_names column names
+   * @param rows row data
    */
-  constructor(sheet_name, column_names, rows) {
+  constructor(sheet_name: string, column_names: string[], rows: Value[][]) {
     this._sheet_name = sheet_name;
     this._column_names = column_names;
     this._rows = rows;
@@ -210,9 +258,9 @@ class Xlsx2SeedData {
   }
 
   as_key_based() {
-    const records = {};
+    const records: KeyBasedRecord = {};
     for (const row of this.rows) {
-      const record = {};
+      const record = {} as Record; // tslint:disable-line no-object-literal-type-assertion
       row.forEach((value, index) => {
         const key = this.column_names[index];
         record[key] = value;
@@ -221,13 +269,14 @@ class Xlsx2SeedData {
         records[`data${record.id}`] = record;
       }
     }
+
     return records;
   }
 
   as_separated_key_based(cut_prefix = 0, cut_postfix = 0) {
     const records = this.as_key_based();
-    const separated_records = {};
-    for (const key in records) {
+    const separated_records: SeparatedKeyBasedRecord = {};
+    for (const key in records) { // tslint:disable-line forin
       const record = records[key];
       const id = record.id.toString();
       const cut_id = id.slice(cut_prefix, id.length - cut_postfix);
@@ -235,6 +284,7 @@ class Xlsx2SeedData {
       if (!separated_records[cut_key]) separated_records[cut_key] = {};
       separated_records[cut_key][key] = record;
     }
+
     return separated_records;
   }
 
@@ -244,84 +294,101 @@ class Xlsx2SeedData {
 
   as_separated_yaml(cut_prefix = 0, cut_postfix = 0) {
     const separated_records = this.as_separated_key_based(cut_prefix, cut_postfix);
-    const separated_yamls = {};
-    for (const key in separated_records) {
+    const separated_yamls: {[key: string]: string} = {};
+    for (const key in separated_records) { // tslint:disable-line forin
       const records = separated_records[key];
       separated_yamls[key] = jsyaml.dump(records);
     }
+
     return separated_yamls;
   }
 
-  write_as_yaml(directory, name = null, extension = '.yml') {
-    const fso = require('fso').default;
+  write_as_yaml(directory: string, name?: string, extension = '.yml') {
+    const fso = require('fso').default as import ('fso').FileSystemObject; // tslint:disable-line no-require-imports
+
     return fso.new(directory).new((name ? name : this.sheet_name) + extension)
       .writeFile(this.as_yaml());
   }
 
-  write_as_yaml_sync(directory, name = null, extension = '.yml') {
-    const fso = require('fso').default;
+  write_as_yaml_sync(directory: string, name?: string, extension = '.yml') {
+    const fso = require('fso').default as import ('fso').FileSystemObject; // tslint:disable-line no-require-imports
     fso.new(directory).new((name ? name : this.sheet_name) + extension)
       .writeFileSync(this.as_yaml());
   }
 
   write_as_separated_yaml(
-    directory, cut_prefix = 0, cut_postfix = 0, name = null, extension = '.yml'
+    directory: string, cut_prefix = 0, cut_postfix = 0, name?: string, extension = '.yml',
   ) {
     const separated_yamls = this.as_separated_yaml(cut_prefix, cut_postfix);
-    const fso = require('fso').default;
+    const fso = require('fso').default as import ('fso').FileSystemObject; // tslint:disable-line no-require-imports
     const dir = fso.new(directory).new(name ? name : this.sheet_name);
+
     return dir.exists().then((exists) => {
-      if (!exists) dir.mkdirp();
+      if (!exists) return dir.mkdirp();
     }).then(() => {
       const promises = [];
-      for (const key in separated_yamls) {
+      for (const key in separated_yamls) { // tslint:disable-line forin
         const yaml = separated_yamls[key];
         promises.push(dir.new(key + extension).writeFile(yaml));
       }
+
       return Promise.all(promises);
     });
   }
 
   write_as_separated_yaml_sync(
-    directory, cut_prefix = 0, cut_postfix = 0, name = null, extension = '.yml'
+    directory: string, cut_prefix = 0, cut_postfix = 0, name?: string, extension = '.yml',
   ) {
     const separated_yamls = this.as_separated_yaml(cut_prefix, cut_postfix);
-    const fso = require('fso').default;
+    const fso = require('fso').default as import ('fso').FileSystemObject; // tslint:disable-line no-require-imports
     const dir = fso.new(directory).new(name ? name : this.sheet_name);
     dir.mkdirpSync();
-    for (const key in separated_yamls) {
+    for (const key in separated_yamls) { // tslint:disable-line forin
       const yaml = separated_yamls[key];
       dir.new(key + extension).writeFileSync(yaml);
     }
   }
 
   write_as_single_or_separated_yaml(
-    directory, cut_prefix = false, cut_postfix = false, name = null, extension = '.yml'
+    directory: string,
+    cut_prefix: number | false = false,
+    cut_postfix: number | false = false,
+    name?: string,
+    extension = '.yml',
   ) {
     if (cut_prefix === false && cut_postfix === false) {
       return this.write_as_yaml(directory, name, extension);
     } else {
       return this.write_as_separated_yaml(
-        directory, Number(cut_prefix), Number(cut_postfix), name, extension
+        directory, Number(cut_prefix), Number(cut_postfix), name, extension,
       );
     }
   }
 
   write_as_single_or_separated_yaml_sync(
-    directory, cut_prefix = false, cut_postfix = false, name = null, extension = '.yml'
+    directory: string,
+    cut_prefix: number | false = false,
+    cut_postfix: number | false = false,
+    name?: string,
+    extension = '.yml',
   ) {
     if (cut_prefix === false && cut_postfix === false) {
       this.write_as_yaml_sync(directory, name, extension);
     } else {
       this.write_as_separated_yaml_sync(
-        directory, Number(cut_prefix), Number(cut_postfix), name, extension
+        directory, Number(cut_prefix), Number(cut_postfix), name, extension,
       );
     }
   }
 }
 
-class Xlsx2SeedVersionError extends Error {
-  constructor(row_index, column_index, reason) {
+export class Xlsx2SeedVersionError extends Error {
+  row_index: number;
+  column_index: number;
+  reason: Error;
+  address: string;
+
+  constructor(row_index: number, column_index: number, reason: Error) {
     const address = XLSX.utils.encode_cell({c: column_index, r: row_index});
     super(`Version Compare Error at ${address} cell.\nreason:\n---\n${reason.stack}---\n`);
     this.row_index = row_index;
@@ -330,5 +397,3 @@ class Xlsx2SeedVersionError extends Error {
     this.address = address;
   }
 }
-
-module.exports = {Xlsx2Seed, Xlsx2SeedSheet, Xlsx2SeedData, Xlsx2SeedVersionError};

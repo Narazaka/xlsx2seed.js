@@ -1,0 +1,26 @@
+{
+    "extends": "tslint:all",
+    "rules": {
+        "typedef":false,
+        "member-access":false,
+        "interface-name":[true, "never-prefix"],
+        "member-ordering":false,
+        "curly":false,
+        "comment-format":[true, "check-space"],
+        "no-any":false,
+        "newline-per-chained-call":false,
+        "only-arrow-functions":false,
+        "object-literal-sort-keys": false,
+        "variable-name":false,
+        "no-magic-numbers":false,
+        "max-classes-per-file":false,
+        "quotemark":[true, "single"],
+        "no-unsafe-any":false,
+        "triple-equals":[true, "allow-null-check"],
+        "no-use-before-declare":false,
+        "strict-boolean-expressions":false,
+        "completed-docs":false,
+        "promise-function-async":false,
+        "strict-type-predicates":false
+    }
+}

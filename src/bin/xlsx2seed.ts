@@ -1,21 +1,35 @@
 #!/usr/bin/env node
 
+// tslint:disable no-console
+
 'use strict';
 
-/* eslint-disable no-console, require-jsdoc */
-
-const fs = require('fs');
-const path = require('path');
-const jsyaml = require('js-yaml');
-const Xlsx2Seed = require('../lib/xlsx2seed').Xlsx2Seed;
-const commander = require('commander');
+import * as commander from 'commander';
+import * as fs from 'fs';
+import * as jsyaml from 'js-yaml';
+import * as path from 'path';
+import { KeyBasedRecord, Xlsx2Seed, Xlsx2SeedSheetConfig } from '../lib/xlsx2seed';
 
 const default_config_file = 'xlsx2seed.yml';
 
+type Program = import ('commander').Command & {
+  subdivide: string[];
+  ignore: string[];
+  only: string[];
+  input: string;
+  output: string;
+  stdout: boolean;
+  requireVersion: string;
+  versionColumn: string;
+  ignoreColumns: string[];
+  config: string;
+  configContent: string;
+};
+
 const program = commander
-  .version(require('../package.json').version)
+  .version(require('../package.json').version) // tslint:disable-line no-var-requires no-require-imports
   .arguments('<files...>')
-  // eslint-disable-next-line max-len
+  // tslint:disable-next-line max-line-length
   .option('-S, --subdivide [sheet_name1:2,1:sheet_name2:2,2:sheet_name3,...]', 'subdivide rules', (value) => value.split(','), [])
   .option('-I, --ignore [sheet_name1,sheet_name2,...]', 'ignore sheet names', (value) => value.split(','), [])
   .option('-O, --only [sheet_name1,sheet_name2:2,...]', 'only sheet names', (value) => value.split(','), [])
@@ -43,20 +57,20 @@ const program = commander
     console.log('    $ xlsx2seed hoge.xlsx huga.xlsx -C "column_names_row: 2"');
     console.log('');
   })
-  .parse(process.argv);
+  .parse(process.argv) as Program;
 
 const files = program.args;
 if (!files.length) program.help();
 
-function get_config(program) {
+function get_config(program: Program) { // tslint:disable-line no-shadowed-variable
   try {
     if (program.configContent) {
-      return jsyaml.load(program.configContent);
+      return jsyaml.load(program.configContent) as Xlsx2SeedSheetConfig;
     } else {
       if (program.config) {
-        return jsyaml.load(fs.readFileSync(program.config, {encoding: 'utf8'}));
+        return jsyaml.load(fs.readFileSync(program.config, {encoding: 'utf8'})) as Xlsx2SeedSheetConfig;
       } else if (fs.existsSync(default_config_file)) {
-        return jsyaml.load(fs.readFileSync(default_config_file, {encoding: 'utf8'}));
+        return jsyaml.load(fs.readFileSync(default_config_file, {encoding: 'utf8'})) as Xlsx2SeedSheetConfig;
       } else {
         return {};
       }
@@ -65,15 +79,23 @@ function get_config(program) {
     console.error('load config failed!');
     console.error(error.toString());
     process.exit(1);
+    throw error;
   }
 }
 const config = get_config(program);
 if (program.versionColumn) config.version_column = program.versionColumn;
 if (program.ignoreColumns) config.ignore_columns = program.ignoreColumns;
 
-function sheet_name_subdivide_rule(sheet_name) {
+interface SubdivideRule {
+  cut_prefix: number | false;
+  cut_postfix: number | false;
+  sheet_name: string;
+}
+
+function sheet_name_subdivide_rule(sheet_name: string): SubdivideRule {
   const result = sheet_name.match(/^(?:(\d+):)?(.+?)(?::(\d+))?$/);
   if (!result) throw new Error(`[${sheet_name}] is wrong sheet name and subdivide rule definition`);
+
   return {
     cut_prefix: result[1] ? Number(result[1]) : false,
     cut_postfix: result[3] ? Number(result[3]) : false,
@@ -81,31 +103,31 @@ function sheet_name_subdivide_rule(sheet_name) {
   };
 }
 
-const ignore_sheets = {};
-for (const sheet of program.ignore.map((sheet_name) => sheet_name_subdivide_rule(sheet_name))) {
+const ignore_sheets: {[name: string]: boolean} = {};
+for (const sheet of program.ignore.map(sheet_name_subdivide_rule)) {
   ignore_sheets[sheet.sheet_name] = true;
 }
 
-const subdivide_rules = {};
+const subdivide_rules: {[name: string]: SubdivideRule} = {};
 
-const only_sheets = program.only.length ? {} : null;
-for (const sheet of program.only.map((sheet_name) => sheet_name_subdivide_rule(sheet_name))) {
-  only_sheets[sheet.sheet_name] = true;
+const only_sheets: {[name: string]: boolean} | undefined = program.only.length ? {} : undefined;
+for (const sheet of program.only.map(sheet_name_subdivide_rule)) {
+  only_sheets![sheet.sheet_name] = true; // tslint:disable-line no-non-null-assertion
   subdivide_rules[sheet.sheet_name] = sheet;
 }
 
-for (const sheet of program.subdivide.map((sheet_name) => sheet_name_subdivide_rule(sheet_name))) {
+for (const sheet of program.subdivide.map(sheet_name_subdivide_rule)) {
   subdivide_rules[sheet.sheet_name] = sheet;
 }
 
 const _console = {
-  log: function log(...args) {
+  log: function log(...args: any[]) {
     if (!program.stdout) console.log(...args);
   },
-  time: function log(...args) {
+  time: function log(...args: any[]) {
     if (!program.stdout) console.time(...args);
   },
-  timeEnd: function log(...args) {
+  timeEnd: function log(...args: any[]) {
     if (!program.stdout) console.timeEnd(...args);
   },
 };
@@ -139,7 +161,7 @@ for (const file of files) {
     _console.time('      writetime');
     const data = sheet.data(program.requireVersion);
     if (program.stdout) {
-      const output_data = {};
+      const output_data: {[name: string]: KeyBasedRecord} = {};
       output_data[sheet_name] = data.as_key_based();
       console.log(jsyaml.dump(output_data));
     } else {

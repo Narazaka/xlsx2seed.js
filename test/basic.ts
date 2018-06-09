@@ -1,7 +1,9 @@
+// tslint:disable no-implicit-dependencies
+
 'use strict';
 
-const assert = require('power-assert');
-const {Xlsx2SeedData} = require('../src/lib/xlsx2seed');
+import * as assert from 'power-assert';
+import { Xlsx2SeedData } from '../src/lib/xlsx2seed';
 
 describe('Xlsx2SeedData', () => {
   const vars = {

@@ -1,10 +1,15 @@
 {
     "compilerOptions": {
-        "allowJs": true,
         "target": "es5",
         "module": "commonjs",
         "moduleResolution": "node",
-        "outDir": "."
+        "declaration": true,
+        "strict": true,
+        "outDir": ".",
+        "lib": [
+            "es5",
+            "es2015.promise"
+        ]
     },
     "include": [
         "src"
