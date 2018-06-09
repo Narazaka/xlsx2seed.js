@@ -1,3 +1,7 @@
+'use strict';
+
+/* eslint-disable no-console, require-jsdoc */
+
 const fs = require('fs');
 const path = require('path');
 const jsyaml = require('js-yaml');
@@ -9,6 +13,7 @@ const default_config_file = 'xlsx2seed.yml';
 const program = commander
   .version(require('../package.json').version)
   .arguments('<files...>')
+  // eslint-disable-next-line max-len
   .option('-S, --subdivide [sheet_name1:2,1:sheet_name2:2,2:sheet_name3,...]', 'subdivide rules', (value) => value.split(','), [])
   .option('-I, --ignore [sheet_name1,sheet_name2,...]', 'ignore sheet names', (value) => value.split(','), [])
   .option('-O, --only [sheet_name1,sheet_name2:2,...]', 'only sheet names', (value) => value.split(','), [])
@@ -54,8 +59,8 @@ function get_config(program) {
         return {};
       }
     }
-  } catch(error) {
-    console.error("load config failed!");
+  } catch (error) {
+    console.error('load config failed!');
     console.error(error.toString());
     process.exit(1);
   }
@@ -104,32 +109,32 @@ const _console = {
 };
 
 _console.log(`output-directory: ${program.output}`);
-_console.time(`total`);
+_console.time('total');
 for (const file of files) {
   const file_path = path.isAbsolute(file) ? file : path.join(program.input, file);
   _console.log(`${file}:`);
   _console.log(`  full-path: ${file_path}`);
-  _console.time(`  parsetime`);
+  _console.time('  parsetime');
   const xlsx2seed = new Xlsx2Seed(file_path);
-  _console.timeEnd(`  parsetime`);
+  _console.timeEnd('  parsetime');
 
-  _console.log(`  sheets:`);
+  _console.log('  sheets:');
   for (const sheet_name of xlsx2seed.sheet_names) {
     if (only_sheets && !only_sheets[sheet_name]) continue;
     _console.log(`    ${sheet_name}:`);
     if (ignore_sheets[sheet_name]) {
-      _console.log(`      ignore: skip`);
+      _console.log('      ignore: skip');
       continue;
     }
     const sheet = xlsx2seed.sheet(sheet_name, config);
     if (!sheet.has_id_column()) {
-      _console.log(`      warning: id column not found -> skip!`);
+      _console.log('      warning: id column not found -> skip!');
       continue;
     }
     const {cut_prefix, cut_postfix} = subdivide_rules[sheet_name] || {cut_prefix: false, cut_postfix: false};
     if (cut_prefix !== false || cut_postfix !== false)
       _console.log(`      subdivide: {cut_prefix: ${Number(cut_prefix)}, cut_postfix: ${Number(cut_postfix)}}`);
-    _console.time(`      writetime`);
+    _console.time('      writetime');
     const data = sheet.data(program.requireVersion);
     if (program.stdout) {
       const output_data = {};
@@ -138,7 +143,7 @@ for (const file of files) {
     } else {
       data.write_as_single_or_separated_yaml_sync(program.output, cut_prefix, cut_postfix);
     }
-    _console.timeEnd(`      writetime`);
+    _console.timeEnd('      writetime');
   }
 }
-_console.timeEnd(`total`);
+_console.timeEnd('total');

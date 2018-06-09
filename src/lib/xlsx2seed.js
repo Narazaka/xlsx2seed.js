@@ -1,8 +1,13 @@
+'use strict';
+
 const XLSX = require('xlsx');
 const jsyaml = require('js-yaml');
 const semver = require('semver');
 
 class Xlsx2Seed {
+  /**
+   * @param {string} file xlsx file
+   */
   constructor(file) {
     this._book = XLSX.readFile(file);
   }
@@ -25,13 +30,13 @@ class Xlsx2Seed {
 
 class Xlsx2SeedSheet {
   /**
-   * @param {string} sheet_name
-   * @param {Worksheet} sheet
-   * @param {Object} [config]
-   * @param {number} config.column_names_row
-   * @param {number} config.data_start_row
-   * @param {number} config.ignore_column_names
-   * @param {number} config.version_column
+   * @param {string} sheet_name sheet name
+   * @param {XLSX.WorkSheet} sheet sheet data
+   * @param {Object} [config] config
+   * @param {number} [config.column_names_row] column names row
+   * @param {number} [config.data_start_row] data start row
+   * @param {string[]} [config.ignore_columns] ignore columns
+   * @param {string} [config.version_column] version column
    */
   constructor(sheet_name, sheet, config = {}) {
     this._sheet_name = sheet_name;
@@ -169,10 +174,10 @@ class Xlsx2SeedSheet {
         const value = XLSX.utils.format_cell(cell);
         const use_value =
           value == null || !value.length ? null : // empty cell -> null
-          cell.t === 'n' && value.match(/E\+\d+$/) && !isNaN(value) ? Number(cell.v) : // 1.00+E12 -> use raw value
-          cell.t === 'n' && value.match(/,/) && !isNaN(cell.v) ? Number(cell.v) : // 1,000 -> use raw value
-          isNaN(value) ? value.replace(/\\n/g, "\n").replace(/\r/g, "") : // "\\n" -> "\n" / delete "\r"
-          Number(value);
+            cell.t === 'n' && value.match(/E\+\d+$/) && !isNaN(/** @type {any} */(value)) ? Number(cell.v) : // 1.00+E12 -> use raw value
+              cell.t === 'n' && value.match(/,/) && !isNaN(cell.v) ? Number(cell.v) : // 1,000 -> use raw value
+                isNaN(/** @type {any} */(value)) ? value.replace(/\\n/g, '\n').replace(/\r/g, '') : // "\\n" -> "\n" / delete "\r"
+                  Number(value);
         row.push(use_value);
       }
     }
@@ -181,6 +186,11 @@ class Xlsx2SeedSheet {
 }
 
 class Xlsx2SeedData {
+  /**
+   * @param {string} sheet_name sheet name
+   * @param {string[]} column_names column names
+   * @param {Array<Array<string | number | null>>} rows row data
+   */
   constructor(sheet_name, column_names, rows) {
     this._sheet_name = sheet_name;
     this._column_names = column_names;
@@ -243,13 +253,13 @@ class Xlsx2SeedData {
   }
 
   write_as_yaml(directory, name = null, extension = '.yml') {
-    const fso = require('fso');
+    const fso = require('fso').default;
     return fso.new(directory).new((name ? name : this.sheet_name) + extension)
       .writeFile(this.as_yaml());
   }
 
   write_as_yaml_sync(directory, name = null, extension = '.yml') {
-    const fso = require('fso');
+    const fso = require('fso').default;
     fso.new(directory).new((name ? name : this.sheet_name) + extension)
       .writeFileSync(this.as_yaml());
   }
@@ -258,7 +268,7 @@ class Xlsx2SeedData {
     directory, cut_prefix = 0, cut_postfix = 0, name = null, extension = '.yml'
   ) {
     const separated_yamls = this.as_separated_yaml(cut_prefix, cut_postfix);
-    const fso = require('fso');
+    const fso = require('fso').default;
     const dir = fso.new(directory).new(name ? name : this.sheet_name);
     return dir.exists().then((exists) => {
       if (!exists) dir.mkdirp();
@@ -276,7 +286,7 @@ class Xlsx2SeedData {
     directory, cut_prefix = 0, cut_postfix = 0, name = null, extension = '.yml'
   ) {
     const separated_yamls = this.as_separated_yaml(cut_prefix, cut_postfix);
-    const fso = require('fso');
+    const fso = require('fso').default;
     const dir = fso.new(directory).new(name ? name : this.sheet_name);
     dir.mkdirpSync();
     for (const key in separated_yamls) {
