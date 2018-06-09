@@ -1,33 +1,7 @@
 env:
-  browser: true
   node: true
   mocha: true
-  phantomjs: true
   es6: true
-globals: {}
-ecmaFeatures:
-  generators: true
-  forOf: true
-  binaryLiterals: true
-  classes: true
-  defaultParams: true
-  modules: true
-  templateStrings: true
-  unicodeCodePointEscapes: true
-  objectLiteralDuplicateProperties: true
-  objectLiteralShorthandProperties: true
-  octalLiterals: true
-  destructuring: true
-  objectLiteralComputedProperties: true
-  arrowFunctions: true
-  spread: true
-  globalReturn: true
-  objectLiteralShorthandMethods: true
-  regexUFlag: true
-  superInFunctions: true
-  blockBindings: true
-  regexYFlag: true
-parser: babel-eslint
 rules:
   prefer-reflect: 0
   no-plusplus: 0
@@ -99,7 +73,7 @@ rules:
     - 2
     - always-multiline
   no-spaced-func: 2
-  no-sync: 1
+  no-sync: 0
   no-labels: 2
   no-unreachable: 2
   no-eval: 2
@@ -152,7 +126,7 @@ rules:
   no-func-assign: 2
   max-len:
     - 2
-    - 100
+    - 120
     - 2
     - ignoreComments: true
   no-shadow: 1
