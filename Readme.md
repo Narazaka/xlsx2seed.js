@@ -4,13 +4,11 @@
 [![npm license](https://img.shields.io/npm/l/xlsx2seed.svg)](https://www.npmjs.com/package/xlsx2seed)
 [![npm download total](https://img.shields.io/npm/dt/xlsx2seed.svg)](https://www.npmjs.com/package/xlsx2seed)
 [![npm download by month](https://img.shields.io/npm/dm/xlsx2seed.svg)](https://www.npmjs.com/package/xlsx2seed)
-[![Bower](https://img.shields.io/bower/v/xlsx2seed.svg)](https://github.com/Narazaka/xlsx2seed.js)
-[![Bower](https://img.shields.io/bower/l/xlsx2seed.svg)](https://github.com/Narazaka/xlsx2seed.js)
 
 [![Dependency Status](https://david-dm.org/Narazaka/xlsx2seed.js.svg)](https://david-dm.org/Narazaka/xlsx2seed.js)
-[![devDependency Status](https://david-dm.org/Narazaka/xlsx2seed.js/dev-status.svg)](https://david-dm.org/Narazaka/xlsx2seed.js#info=devDependencies)
-[![Travis Build Status](https://travis-ci.org/Narazaka/xlsx2seed.js.svg)](https://travis-ci.org/Narazaka/xlsx2seed.js)
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Narazaka/xlsx2seed.js?svg=true)](https://ci.appveyor.com/project/Narazaka/xlsx2seed-js)
+[![devDependency Status](https://david-dm.org/Narazaka/xlsx2seed.js/dev-status.svg)](https://david-dm.org/Narazaka/xlsx2seed.js?type=dev)
+[![Travis Build Status](https://travis-ci.org/Narazaka/xlsx2seed.js.svg?branch=master)](https://travis-ci.org/Narazaka/xlsx2seed.js)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Narazaka/xlsx2seed.js?branch=master&svg=true)](https://ci.appveyor.com/project/Narazaka/xlsx2seed-js)
 [![codecov.io](https://codecov.io/github/Narazaka/xlsx2seed.js/coverage.svg?branch=master)](https://codecov.io/github/Narazaka/xlsx2seed.js?branch=master)
 [![Code Climate](https://codeclimate.com/github/Narazaka/xlsx2seed.js/badges/gpa.svg)](https://codeclimate.com/github/Narazaka/xlsx2seed.js)
 
@@ -93,6 +91,6 @@ Now Xlsx2SeedSheet::data() is a method. (It was a getter property, Xlsx2SeedShee
 
 ## License
 
-This is released under [MIT License](http://narazaka.net/license/MIT?2016).
+This is released under [Zlib License](http://narazaka.net/license/Zlib?2018).
 
 This software is using libraries that is released under [Apache 2.0 license](http://www.apache.org/licenses/LICENSE-2.0).
