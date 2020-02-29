@@ -16,23 +16,24 @@
     "lint": "tslint -p ."
   },
   "dependencies": {
-    "commander": "^2.15.1",
-    "fso": "^2.6.3",
+    "commander": "^4.1.1",
+    "fso": "^2.7.0",
     "js-yaml": "^3.12.0",
     "semver": "^7.1.3",
-    "xlsx": "^0.13.0"
+    "xlsx": "^0.15.5"
   },
   "devDependencies": {
-    "@types/js-yaml": "^3.11.1",
-    "@types/node": "^10.3.2",
+    "@types/js-yaml": "^3.12.2",
+    "@types/mocha": "^7.0.1",
+    "@types/node": "^13.7.7",
     "@types/power-assert": "^1.5.0",
     "@types/semver": "^7.1.0",
-    "espower-typescript": "^8.1.3",
-    "mocha": "^5.2.0",
-    "power-assert": "^1.5.0",
+    "espower-typescript": "^9.0.2",
+    "mocha": "^7.1.0",
+    "power-assert": "^1.6.1",
     "rimraf": "^3.0.2",
-    "tslint": "^5.10.0",
-    "typescript": "^2.9.1"
+    "tslint": "^6.0.0",
+    "typescript": "^3.8.3"
   },
   "url": "https://github.com/Narazaka/xlsx2seed.js",
   "author": "Narazaka",
