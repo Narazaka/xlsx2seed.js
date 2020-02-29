@@ -27,7 +27,7 @@
     "@types/node": "^10.3.2",
     "@types/power-assert": "^1.5.0",
     "@types/semver": "^7.1.0",
-    "espower-typescript": "^8.1.3",
+    "espower-typescript": "^9.0.2",
     "mocha": "^5.2.0",
     "power-assert": "^1.5.0",
     "rimraf": "^3.0.2",
